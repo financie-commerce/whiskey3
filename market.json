@@ -1,9 +1,9 @@
 {
-  "asof": "2026/06/11 18:07",
+  "asof": "2026/06/11 18:09",
   "periods": {
     "day": {
-      "price": 3.021300998120096e+19,
-      "changePct": -14.77,
+      "price": 30.213,
+      "changePct": -14.69,
       "marketCap": "—",
       "volume": "0",
       "totalSupply": 0,
@@ -208,8 +208,8 @@
       }
     },
     "week": {
-      "price": 3.021300998120096e+19,
-      "changePct": -14.77,
+      "price": 30.213,
+      "changePct": -14.69,
       "marketCap": "—",
       "volume": "0",
       "totalSupply": 0,
@@ -414,8 +414,8 @@
       }
     },
     "month": {
-      "price": 3.021300998120096e+19,
-      "changePct": -14.77,
+      "price": 30.213,
+      "changePct": -14.69,
       "marketCap": "—",
       "volume": "0",
       "totalSupply": 0,
@@ -620,8 +620,8 @@
       }
     },
     "year": {
-      "price": 3.021300998120096e+19,
-      "changePct": -14.77,
+      "price": 30.213,
+      "changePct": -14.69,
       "marketCap": "—",
       "volume": "0",
       "totalSupply": 0,
