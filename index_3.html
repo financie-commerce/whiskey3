@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Whiskey&amp;Co. — key3トークン</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --gold:        #BFA024;
+    --gold-light:  #D4B442;
+    --gold-dim:    #7A6812;
+    --bg:          #000000;
+    --bg2:         #0D0C09;
+    --bg3:         #161410;
+    --border:      rgba(191,160,36,.15);
+    --border-mid:  rgba(191,160,36,.25);
+    --text:        #E8DFC8;
+    --text-muted:  #7A7060;
+    --up:          #5DC9A0;
+    --down:        #E24B4A;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', 'Helvetica Neue', sans-serif;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg);
+    border-bottom: 0.5px solid var(--border);
+    padding: 0 2.5rem;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-logo {
+    height: 36px;
+    width: auto;
+    /* 白背景ロゴを黒背景に馴染ませる */
+    mix-blend-mode: lighten;
+    filter: brightness(0.92);
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .header-tag {
+    font-size: 10px;
+    letter-spacing: .18em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .header-badge {
+    font-size: 10px;
+    letter-spacing: .12em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    border: 0.5px solid var(--border);
+    padding: .2rem .65rem;
+    border-radius: 2px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 52vh;
+    padding: 5rem 2rem 3rem;
+    text-align: center;
+    position: relative;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 48px;
+    background: linear-gradient(to bottom, var(--gold-dim), transparent);
+  }
+  .hero-mark {
+    width: 72px;
+    height: auto;
+    mix-blend-mode: lighten;
+    filter: brightness(0.9);
+    margin-bottom: 2.5rem;
+    opacity: .85;
+  }
+  .hero-eyebrow {
+    font-size: 10px;
+    letter-spacing: .22em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+  .hero-h1 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 300;
+    font-size: clamp(2.6rem, 5.5vw, 4rem);
+    color: var(--text);
+    line-height: 1.2;
+    letter-spacing: .02em;
+    margin-bottom: 1.25rem;
+  }
+  .hero-h1 em {
+    font-style: italic;
+    color: var(--gold-light);
+  }
+  .hero-sub {
+    font-size: .8rem;
+    color: var(--text-muted);
+    letter-spacing: .06em;
+    max-width: 380px;
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+  }
+  .cta-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+  .btn-primary {
+    background: var(--gold);
+    color: #000;
+    border: none;
+    padding: .6rem 1.6rem;
+    font-family: 'Inter', sans-serif;
+    font-size: .75rem;
+    font-weight: 400;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background .15s;
+  }
+  .btn-primary:hover { background: var(--gold-light); }
+  .btn-ghost {
+    border: 0.5px solid var(--border-mid);
+    color: var(--text-muted);
+    padding: .6rem 1.6rem;
+    font-family: 'Inter', sans-serif;
+    font-size: .75rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    background: transparent;
+    transition: border-color .15s, color .15s;
+  }
+  .btn-ghost:hover { border-color: var(--gold-dim); color: var(--text); }
+
+  /* ── DIVIDER ── */
+  .rule {
+    border: none;
+    border-top: 0.5px solid var(--border);
+    margin: 0 auto;
+    max-width: 960px;
+  }
+
+  /* ── MARKET ── */
+  .market {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem;
+  }
+  .market-eyebrow {
+    font-size: 10px;
+    letter-spacing: .2em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  /* 価格 */
+  .price-block {
+    text-align: center;
+    margin-bottom: 1.75rem;
+  }
+  .price-label {
+    font-size: 10px;
+    letter-spacing: .14em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: .5rem;
+  }
+  .price-number {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 300;
+    font-style: italic;
+    font-size: clamp(3.5rem, 9vw, 5.5rem);
+    color: var(--text);
+    line-height: 1;
+    letter-spacing: -.01em;
+  }
+  .price-unit {
+    font-family: 'Inter', sans-serif;
+    font-size: .85rem;
+    color: var(--text-muted);
+    margin-left: .3em;
+    vertical-align: middle;
+  }
+  .price-change {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .75rem;
+    margin-top: .5rem;
+    font-size: .8rem;
+    font-family: 'Inter', sans-serif;
+  }
+  .change-pct { font-weight: 400; letter-spacing: .03em; }
+  .change-abs { color: var(--text-muted); font-size: .75rem; }
+  .up   { color: var(--up); }
+  .down { color: var(--down); }
+  .flat { color: var(--text-muted); }
+
+  /* 期間タブ */
+  .period-tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: .75rem;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .period-tab {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: .1em;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    padding: .5rem 1.1rem;
+    cursor: pointer;
+    position: relative;
+    transition: color .12s;
+  }
+  .period-tab::after {
+    content: '';
+    position: absolute;
+    bottom: -0.5px;
+    left: 0; right: 0;
+    height: 1px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transition: transform .15s;
+  }
+  .period-tab:hover { color: var(--text); }
+  .period-tab.active { color: var(--gold-light); }
+  .period-tab.active::after { transform: scaleX(1); }
+
+  /* チャート */
+  .chart-wrap {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    padding: 1.25rem 1rem .75rem;
+    margin-bottom: 1.25rem;
+    position: relative;
+  }
+  canvas#marketChart { width: 100% !important; height: 150px !important; }
+  .chart-status {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 1.5rem;
+  }
+
+  /* スタッツ */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 0.5px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+  .stat {
+    background: var(--bg2);
+    padding: .9rem 1.1rem;
+  }
+  .stat-label {
+    font-size: 9px;
+    letter-spacing: .12em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: .3rem;
+  }
+  .stat-value {
+    font-family: 'Inter', sans-serif;
+    font-size: .9rem;
+    color: var(--text);
+  }
+  .stat-unit {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-left: .2em;
+  }
+
+  .market-asof {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: center;
+    letter-spacing: .06em;
+    margin-bottom: 1.75rem;
+  }
+  .market-cta { text-align: center; }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 0.5px solid var(--border);
+    padding: 2rem 2rem;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: .04em;
+  }
+  footer a { color: var(--gold-dim); text-decoration: none; }
+  footer a:hover { color: var(--gold); }
+
+  @media (max-width: 600px) {
+    header { padding: 0 1.25rem; }
+    .hero { padding: 3.5rem 1.25rem 2.5rem; }
+    .market { padding: 3rem 1.25rem; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="./w_c.png" alt="Whiskey&Co." class="header-logo">
+  <div class="header-right">
+    <span class="header-tag">key3 token</span>
+    <span class="header-badge">FiNANCiE</span>
+  </div>
+</header>
+
+<section class="hero">
+  <img src="./w_c.png" alt="" class="hero-mark" aria-hidden="true">
+  <p class="hero-eyebrow">Craft Whisky × Community Token</p>
+  <h1 class="hero-h1">蒸留所と、<em>ともに育てる</em><br>ウイスキーの物語。</h1>
+  <p class="hero-sub">key3トークンを通じて、蒸留・熟成・販売の全過程にオーナーとして関わる。</p>
+  <div class="cta-row">
+    <a class="btn-primary" href="https://financie.jp/communities/whiskey_and_co" target="_blank" rel="noopener">コミュニティを見る</a>
+    <a class="btn-ghost" href="https://financie.jp/communities/whiskey_and_co/market" target="_blank" rel="noopener">マーケットへ</a>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section class="market">
+  <p class="market-eyebrow">Live Market · key3</p>
+
+  <div class="price-block">
+    <p class="price-label">現在価格</p>
+    <div>
+      <span class="price-number" id="price">—</span><span class="price-unit">円</span>
+    </div>
+    <div class="price-change">
+      <span class="change-pct flat" id="change-pct">—</span>
+      <span class="change-abs" id="change-abs">—</span>
+    </div>
+  </div>
+
+  <div class="period-tabs">
+    <button class="period-tab active" data-period="day">日</button>
+    <button class="period-tab" data-period="week">週</button>
+    <button class="period-tab" data-period="month">月</button>
+    <button class="period-tab" data-period="year">年</button>
+  </div>
+
+  <div class="chart-wrap">
+    <canvas id="marketChart"></canvas>
+    <p class="chart-status" id="chart-status">読み込み中...</p>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat">
+      <div class="stat-label">時価総額</div>
+      <div class="stat-value" id="market-cap">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">出来高 (24H)</div>
+      <div class="stat-value" id="volume">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">トークン総数</div>
+      <div class="stat-value"><span id="total-supply">—</span><span class="stat-unit">CT</span></div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">在庫</div>
+      <div class="stat-value"><span id="stock">—</span><span class="stat-unit">CT</span></div>
+    </div>
+  </div>
+
+  <p class="market-asof" id="asof"></p>
+
+  <div class="market-cta">
+    <a class="btn-ghost" href="https://financie.jp/communities/whiskey_and_co/market" target="_blank" rel="noopener">マーケットで取引する</a>
+  </div>
+</section>
+
+<footer>
+  <p>
+    本ページはファン・サポーター向けの非公式情報サイトです。投資勧誘を目的としたものではありません。<br>
+    公式：<a href="https://financie.jp/communities/whiskey_and_co" target="_blank" rel="noopener">FiNANCiE · Whiskey&amp;Co.</a>
+    &nbsp;/&nbsp;
+    <a href="https://whiskey.co.jp/" target="_blank" rel="noopener">whiskey.co.jp</a>
+  </p>
+</footer>
+
+<script>
+const MARKET_JSON_URL = "./market.json";
+const fmtPrice = n => n == null ? "—" : Number(n).toLocaleString("ja-JP", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtPct   = n => n == null ? "—" : (n >= 0 ? "+" : "") + Number(n).toFixed(2) + "%";
+const fmtNum   = n => n == null ? "—" : Number(n).toLocaleString("ja-JP");
+
+let marketData = null;
+let chart = null;
+let currentPeriod = "day";
+
+function renderPeriod(periodKey) {
+  if (!marketData?.periods) return;
+  const p = marketData.periods[periodKey];
+  if (!p) return;
+  currentPeriod = periodKey;
+
+  document.getElementById("price").textContent = fmtPrice(p.price);
+
+  const pct = p.changePct ?? 0;
+  const pctEl = document.getElementById("change-pct");
+  pctEl.textContent = fmtPct(pct);
+  pctEl.className = "change-pct " + (pct > 0 ? "up" : pct < 0 ? "down" : "flat");
+
+  const chartData = p.chart?.data ?? [];
+  if (chartData.length >= 2) {
+    const abs = (p.price ?? 0) - chartData[0];
+    const absEl = document.getElementById("change-abs");
+    absEl.textContent = (abs >= 0 ? "+" : "") + abs.toFixed(2) + " 円";
+    absEl.className = "change-abs " + (abs > 0 ? "up" : abs < 0 ? "down" : "flat");
+  }
+
+  document.getElementById("market-cap").textContent  = p.marketCap ?? "—";
+  document.getElementById("volume").textContent      = p.volume ?? "—";
+  document.getElementById("total-supply").textContent = fmtNum(p.totalSupply);
+  document.getElementById("stock").textContent       = fmtNum(p.stock);
+
+  const labels = (p.chart?.labels ?? []).map(ts => {
+    const d = new Date(ts * 1000);
+    if (periodKey === "day") {
+      return d.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tokyo" });
+    } else {
+      return d.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", timeZone: "Asia/Tokyo" });
+    }
+  });
+  const vals = p.chart?.data ?? [];
+
+  const statusEl = document.getElementById("chart-status");
+  if (vals.length === 0) {
+    statusEl.textContent = "チャートデータなし";
+    statusEl.style.display = "";
+    if (chart) { chart.destroy(); chart = null; }
+    return;
+  }
+  statusEl.style.display = "none";
+
+  const ctx = document.getElementById("marketChart").getContext("2d");
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        data: vals,
+        borderColor: "#BFA024",
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0.3,
+        fill: true,
+        backgroundColor: "rgba(191,160,36,0.07)"
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#0D0C09",
+          borderColor: "rgba(191,160,36,.3)",
+          borderWidth: 0.5,
+          titleColor: "#7A7060",
+          bodyColor: "#BFA024",
+          padding: 8,
+          callbacks: {
+            label: ctx => "¥" + ctx.parsed.y.toLocaleString("ja-JP", { minimumFractionDigits: 2 })
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: "#7A7060", font: { size: 9, family: "Inter, sans-serif" }, maxTicksLimit: 13 },
+          grid: { color: "rgba(255,255,255,.02)" }
+        },
+        y: {
+          ticks: {
+            color: "#7A7060",
+            font: { size: 9, family: "Inter, sans-serif" },
+            callback: v => "¥" + v.toFixed(1)
+          },
+          grid: { color: "rgba(255,255,255,.02)" },
+          position: "right"
+        }
+      }
+    }
+  });
+}
+
+async function loadMarket() {
+  try {
+    const res = await fetch(MARKET_JSON_URL + "?t=" + Date.now());
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    marketData = await res.json();
+    if (marketData.asof) {
+      document.getElementById("asof").textContent = "最終更新 " + marketData.asof + " JST";
+    }
+    renderPeriod(currentPeriod);
+  } catch (e) {
+    console.error(e);
+    document.getElementById("chart-status").textContent = "データの読み込みに失敗しました";
+    document.getElementById("chart-status").style.display = "";
+  }
+}
+
+document.querySelectorAll(".period-tab").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".period-tab").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    renderPeriod(btn.dataset.period);
+  });
+});
+
+loadMarket();
+setInterval(loadMarket, 10 * 60 * 1000);
+</script>
+</body>
+</html>
