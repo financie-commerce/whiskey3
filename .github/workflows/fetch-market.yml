@@ -2,112 +2,67 @@ name: Fetch Whiskey&Co. Market Data
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: '*/10 * * * *'
   workflow_dispatch:
-
-permissions:
-  contents: write
 
 jobs:
   fetch:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch market data (1d/1w/1m/1y)
+      - name: Fetch FiNANCiE market data
         run: |
-          curl -s -H "Accept: application/json" -H "User-Agent: Mozilla/5.0" \
-            "https://financie.jp/api/charts/bancor/${{ secrets.OWNERCARD_ID }}/1d" \
-            -o raw_1d.json
-          curl -s -H "Accept: application/json" -H "User-Agent: Mozilla/5.0" \
-            "https://financie.jp/api/charts/bancor/${{ secrets.OWNERCARD_ID }}/1w" \
-            -o raw_1w.json
-          curl -s -H "Accept: application/json" -H "User-Agent: Mozilla/5.0" \
-            "https://financie.jp/api/charts/bancor/${{ secrets.OWNERCARD_ID }}/1m" \
-            -o raw_1m.json
-          curl -s -H "Accept: application/json" -H "User-Agent: Mozilla/5.0" \
-            "https://financie.jp/api/charts/bancor/${{ secrets.OWNERCARD_ID }}/1y" \
-            -o raw_1y.json
+          for period in day week month year; do
+            curl -s \
+              -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" \
+              -H "Accept: application/json, text/plain, */*" \
+              -H "Referer: https://financie.jp/communities/whiskey_and_co/market" \
+              "https://financie.jp/api/charts/bancor/${{ secrets.OWNERCARD_ID }}/${period}" \
+              -o "raw_${period}.json" &
+          done
+          wait
 
-      - name: Parse and save market.json
+      - name: Build market.json
         run: |
-          python3 - <<'EOF'
-          import json, sys, datetime
-
-          def parse_period(path, max_points=96):
-              try:
-                  with open(path) as f:
-                      raw = json.load(f)
-              except Exception as e:
-                  print(f"Failed to load {path}: {e}", file=sys.stderr)
-                  return None
-
-              # prices は [[timestamp_ms, price], ...] 形式
-              prices_raw = raw.get("prices")
-              if prices_raw:
-                  prices = [[int(p[0]), float(p[1])] for p in prices_raw if p[1] is not None]
-              else:
-                  chart = raw.get("chart", {})
-                  labels = chart.get("labels", [])
-                  data   = chart.get("data", [])
-                  prices = [[int(ts) * 1000, float(p)] for ts, p in zip(labels, data) if p is not None]
-
-              if not prices:
-                  return None
-
-              prices  = prices[-max_points:]
-              # latest_price は信頼しない（整数スケールで返ることがある）
-              # 常に prices[-1][1] を正とする
-              current = prices[-1][1]
-              first   = prices[0][1]
-              change_pct = round((current - first) / first * 100, 2) if first > 0 else 0
-
-              # bancor から total_supply / stock だけ補完
-              bancor       = raw.get("bancor", {})
-              total_supply = bancor.get("total_token_amount") or bancor.get("total_supply") or 0
-              stock        = bancor.get("stock_token_amount") or bancor.get("stock") or 0
-              market_cap   = round(current * (total_supply - stock), 1) if total_supply else 0
-
-              return {
-                  "price":       round(current, 4),
-                  "changePct":   change_pct,
-                  "marketCap":   f"{market_cap:,.1f}" if market_cap else "—",
-                  "volume":      "0",
-                  "totalSupply": int(total_supply),
-                  "stock":       int(stock),
-                  "chart": {
-                      "labels": [p[0] for p in prices],
-                      "data":   [p[1] for p in prices],
-                  }
+          python3 << 'PYTHON'
+          import json, os, datetime
+          periods = ["day", "week", "month", "year"]
+          result = {
+            "asof": datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime("%Y/%m/%d %H:%M"),
+            "periods": {}
+          }
+          for period in periods:
+            path = f"raw_{period}.json"
+            if not os.path.exists(path): continue
+            with open(path) as f:
+              try: d = json.load(f)
+              except: continue
+            price = float(d.get("bancor",{}).get("latest_price","0")) / 1e18
+            stock = round(float(d.get("market",{}).get("stock","0")) / 1e18)
+            total_supply = round(float(d.get("market",{}).get("total_supply","0")) / 1e18)
+            result["periods"][period] = {
+              "price": round(price, 4),
+              "changePct": float(d.get("bancor",{}).get("price_change_percent", 0)),
+              "marketCap": d.get("market",{}).get("capitalization",""),
+              "volume": d.get("market",{}).get("trading_volume",""),
+              "volumeLabel": d.get("market",{}).get("trading_volume_aggregation_period",""),
+              "stock": stock,
+              "totalSupply": total_supply,
+              "chart": {
+                "labels": d.get("chart",{}).get("labels",[]),
+                "data":   d.get("chart",{}).get("data",[])
               }
+            }
+          with open("market.json","w") as f: json.dump(result, f, ensure_ascii=False)
+          PYTHON
 
-          now_jst = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
-          asof    = now_jst.strftime("%Y/%m/%d %H:%M")
-
-          periods = {}
-          for key, path in [("day","raw_1d.json"),("week","raw_1w.json"),("month","raw_1m.json"),("year","raw_1y.json")]:
-              result = parse_period(path)
-              if result:
-                  periods[key] = result
-              else:
-                  print(f"Skipping period {key}", file=sys.stderr)
-
-          if not periods:
-              print("All periods failed", file=sys.stderr)
-              sys.exit(1)
-
-          out = {"asof": asof, "periods": periods}
-          with open("market.json", "w") as f:
-              json.dump(out, f, ensure_ascii=False, indent=2)
-
-          day = periods.get("day", {})
-          print(f"Saved: asof={asof}, price={day.get('price')}, change={day.get('changePct')}%")
-          EOF
-
-      - name: Commit market.json
+      - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add market.json
-          git diff --cached --quiet || git commit -m "chore: update market data $(date -u +'%Y-%m-%dT%H:%MZ')"
+          git diff --cached --quiet || git commit -m "chore: update market data $(date -u '+%Y-%m-%d %H:%M UTC')"
           git push
