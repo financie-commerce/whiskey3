@@ -54,7 +54,7 @@ jobs:
 
           out = {
               "fetched_at": datetime.datetime.utcnow().isoformat() + "Z",
-              "current_price": float(latest_price) if latest_price else round(float(data[-1]), 4),
+              "current_price": round(float(data[-1]), 4) if data else 0,
               "price_change_percent": float(price_change) if price_change else None,
               "prices": prices[-96:],  # 最大96件
           }
