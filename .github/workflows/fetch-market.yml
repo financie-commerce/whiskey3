@@ -21,7 +21,13 @@ jobs:
             -H "User-Agent: Mozilla/5.0" \
             "https://financie.jp/api/charts/bancor/${{ secrets.OWNERCARD_ID }}/1d" \
             -o market_raw.json
-
+- name: Debug - Show raw API response
+        run: |
+          echo "=== RAW API RESPONSE ==="
+          head -c 500 market_raw.json
+          echo ""
+          echo "=== bancor section ==="
+          python3 -c "import json; d=json.load(open('market_raw.json')); print(json.dumps(d.get('bancor'), indent=2))"
       - name: Parse and save market.json
         run: |
           python3 - <<'EOF'
