@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch market data (1d)
+      - name: Fetch market data (1d/1w/1m/1y)
         run: |
           curl -s -H "Accept: application/json" -H "User-Agent: Mozilla/5.0" \
             "https://financie.jp/api/charts/bancor/${{ secrets.OWNERCARD_ID }}/1d" \
@@ -42,7 +42,7 @@ jobs:
                   print(f"Failed to load {path}: {e}", file=sys.stderr)
                   return None
 
-              # prices は [[timestamp_ms, price], ...] または chart.labels/data 形式
+              # prices は [[timestamp_ms, price], ...] 形式
               prices_raw = raw.get("prices")
               if prices_raw:
                   prices = [[int(p[0]), float(p[1])] for p in prices_raw if p[1] is not None]
@@ -55,24 +55,15 @@ jobs:
               if not prices:
                   return None
 
-              prices = prices[-max_points:]
+              prices  = prices[-max_points:]
+              # latest_price は信頼しない（整数スケールで返ることがある）
+              # 常に prices[-1][1] を正とする
               current = prices[-1][1]
               first   = prices[0][1]
               change_pct = round((current - first) / first * 100, 2) if first > 0 else 0
 
-              # bancor から補完できる場合は使う
-              bancor = raw.get("bancor", {})
-              if bancor.get("latest_price") is not None:
-                  try:
-                      current = float(bancor["latest_price"])
-                  except (ValueError, TypeError):
-                      pass  # パース失敗時は prices[-1][1] を使い続ける
-              if bancor.get("price_change_percent") is not None:
-                  try:
-                      change_pct = float(bancor["price_change_percent"])
-                  except (ValueError, TypeError):
-                      pass
-
+              # bancor から total_supply / stock だけ補完
+              bancor       = raw.get("bancor", {})
               total_supply = bancor.get("total_token_amount") or bancor.get("total_supply") or 0
               stock        = bancor.get("stock_token_amount") or bancor.get("stock") or 0
               market_cap   = round(current * (total_supply - stock), 1) if total_supply else 0
@@ -91,7 +82,7 @@ jobs:
               }
 
           now_jst = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
-          asof = now_jst.strftime("%Y/%m/%d %H:%M")
+          asof    = now_jst.strftime("%Y/%m/%d %H:%M")
 
           periods = {}
           for key, path in [("day","raw_1d.json"),("week","raw_1w.json"),("month","raw_1m.json"),("year","raw_1y.json")]:
